@@ -8,7 +8,7 @@
 @shoulder, @forearm, @elbow, @claw = 180, 50, 60, 35
 
 # setup osc server so we can listen for messages from the multi-touch on my iphone
-osc_server = OSC::Server.new "razic.local", 4000
+osc_server = OSC::Server.new "razic.local",8001
 
 # these are the osc patterns and their callbacks
 # it's callback is triggered when a osc message matching one of our addresses is received
@@ -32,17 +32,17 @@ loop do
   string << "<c#{@claw.to_i}>" if @claw.to_i != @last_claw
   
   # log to stdout
-  p string unless string.emtpy?
+  puts "#{string}\n\n" unless string.empty?
   
   # talk to arduino
   @arduino.write string unless string.empty?
   
+  # so we don't write the same value over and over
   @last_shoulder = @shoulder.to_i
   @last_forearm = @forearm.to_i
   @last_elbow = @elbow.to_i
   @last_claw = @claw.to_i
   
-  sleep 0.002
-  # this sleeps for half a second (which is way too long)
-  # sleep 0.0000002
+  # who needs sleep?
+  sleep 0.01
 end
