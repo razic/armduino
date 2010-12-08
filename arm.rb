@@ -2,7 +2,7 @@
 %w[ rubygems osc-ruby serialport ].each { |lib| require lib }
 
 # connect to arduino
-@arduino = SerialPort.new "/dev/tty.usbserial-A800etAZ", 115200, 8, 1, SerialPort::NONE
+@arduino = SerialPort.new "/dev/tty.usbserial-A800etAZ", 115200
 
 # initial arm position
 @shoulder, @forearm, @elbow, @claw = 180, 50, 60, 35
@@ -25,24 +25,18 @@ Thread.new { osc_server.run }
 # start telling the arduino where to move the motors
 loop do
   # here are our little packets
-  string = ""
-  string << "<s#{@shoulder.to_i}>" if @shoulder.to_i != @last_shoulder
-  string << "<f#{@forearm.to_i}>" if @forearm.to_i != @last_forearm
-  string << "<e#{@elbow.to_i}>" if @elbow.to_i != @last_elbow
-  string << "<c#{@claw.to_i}>" if @claw.to_i != @last_claw
+  ["<", 0, @shoulder.to_i, ">"].each { |byte| @arduino.putc byte } if @shoulder.to_i != @last_shoulder
+  ["<", 1, @forearm.to_i, ">"].each { |byte| @arduino.putc byte } if @forearm.to_i != @last_forearm
+  ["<", 2, @elbow.to_i, ">"].each { |byte| @arduino.putc byte } if @elbow.to_i != @last_elbow
+  ["<", 3, @claw.to_i, ">"].each { |byte| @arduino.putc byte } if @claw.to_i != @last_claw
   
-  # log to stdout
-  puts "#{string}\n\n" unless string.empty?
-  
-  # talk to arduino
-  @arduino.write string unless string.empty?
-  
-  # so we don't write the same value over and over
   @last_shoulder = @shoulder.to_i
   @last_forearm = @forearm.to_i
   @last_elbow = @elbow.to_i
   @last_claw = @claw.to_i
   
+  puts ".\n"
+  
   # who needs sleep?
-  sleep 0.01
+  sleep 0.02
 end

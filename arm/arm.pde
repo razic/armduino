@@ -1,20 +1,24 @@
 #include <Servo.h>
 
 Servo shoulder, forearm, elbow, claw;
+Servo arm[4] = { shoulder, forearm, elbow, claw };
 
-int shoulder_pin = 3;
-int forearm_pin = 5;
-int elbow_pin = 6;
-int claw_pin = 9;
-long int baud = 115200;
-char buff[4];
 byte i = 0;
-boolean started = false;
+byte buff[2];
+
+int claw_pin = 9;
+int elbow_pin = 6;
+int forearm_pin = 5;
+int shoulder_pin = 3;
+
+long int baud = 115200;
+
 boolean ended = false;
+boolean started = false;
 
 void setup(){
   Serial.begin(baud);
-  
+
   shoulder.attach(shoulder_pin);
   forearm.attach(forearm_pin);
   elbow.attach(elbow_pin);
@@ -22,47 +26,31 @@ void setup(){
 }
 
 void loop(){
-  while(Serial.available() > 0){
-    char aChar = Serial.read();
-
-    if(aChar == '<'){ 
+  while(Serial.available()){
+    byte aByte = Serial.read();
+    
+    switch(aByte){
+    case 60: // <
       started = true; 
-      ended = false; 
-    } 
-    else if(aChar == '>'){
+      ended = false;
+      break;
+    case 62: // >
       ended = true;
-      break; // break the while loop
-    } 
-    else {
-      buff[i] = aChar;
+      break;
+    default:
+      buff[i] = aByte;
       i++;
-      buff[i] = '\0'; // this terminates the array
+      buff[i] = '\0';
     }
   }
 
   if(started && ended){
-    int intpos;
-    char pos[3] = { buff[1], buff[2], buff[3] };
-    intpos = atoi(pos);
-    
-    Serial.print("Writing motor ");
-    Serial.print(buff[0]);
-    Serial.print(" to ");
-    Serial.println(intpos);
-    Serial.println();
-    
-    if(buff[0] == 's') shoulder.write(intpos);
-    if(buff[0] == 'f') forearm.write(intpos);
-    if(buff[0] == 'e') elbow.write(intpos);
-    if(buff[0] == 'c') claw.write(intpos);
+    arm[buff[0]].write(buff[1]);
     
     i = 0;
-    buff[i] = '\0'; // this terminates the array
+    buff[i] = '\0';
     started = false;
     ended = false;
   }
 }
-
-
-
 
